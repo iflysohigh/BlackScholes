@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,7 +48,8 @@
             margin: 0 auto;
         }
 
-        h1, h2 {
+        h1,
+        h2 {
             color: #007bff;
         }
 
@@ -121,6 +123,7 @@
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="#">Black-Scholes Bot</a>
@@ -131,35 +134,41 @@
 
     <div class="container mt-4">
         <h1 class="mb-4">Options Pricing with Black-Scholes Model</h1>
-        
+
         <form id="optionForm">
             <div class="form-group">
                 <label for="spot_price">Spot Price:</label>
-                <input type="text" placeholder="42.00" class="form-control" id="spot_price" name="spot_price" required onkeydown="if(event.keyCode==13) calculateOptionPrice();">
+                <input type="text" placeholder="42.00" class="form-control" id="spot_price" name="spot_price" required
+                    onkeydown="if(event.keyCode==13) calculateOptionPrice();">
             </div>
 
             <div class="form-group">
                 <label for="strike_price">Strike Price:</label>
-                <input type="text" placeholder="40.00" class="form-control" id="strike_price" name="strike_price" required onkeydown="if(event.keyCode==13) calculateOptionPrice();">
+                <input type="text" placeholder="40.00" class="form-control" id="strike_price" name="strike_price"
+                    required onkeydown="if(event.keyCode==13) calculateOptionPrice();">
             </div>
 
             <div class="form-group">
                 <label for="time_to_maturity">Time to Maturity (in years):</label>
-                <input type="text" placeholder="0.5" class="form-control" id="time_to_maturity" name="time_to_maturity" required onkeydown="if(event.keyCode==13) calculateOptionPrice();">
+                <input type="text" placeholder="0.5" class="form-control" id="time_to_maturity" name="time_to_maturity"
+                    required onkeydown="if(event.keyCode==13) calculateOptionPrice();">
             </div>
 
             <div class="form-group">
                 <label for="volatility">Volatility:</label>
-                <input type="text" placeholder="0.2" class="form-control" id="volatility" name="volatility" required onkeydown="if(event.keyCode==13) calculateOptionPrice();">
+                <input type="text" placeholder="0.2" class="form-control" id="volatility" name="volatility" required
+                    onkeydown="if(event.keyCode==13) calculateOptionPrice();">
             </div>
 
             <div class="form-group">
                 <label for="interest_rate">Interest Rate:</label>
-                <input type="text" placeholder="0.1" class="form-control" id="interest_rate" name="interest_rate" required onkeydown="if(event.keyCode==13) calculateOptionPrice();">
+                <input type="text" placeholder="0.1" class="form-control" id="interest_rate" name="interest_rate"
+                    required onkeydown="if(event.keyCode==13) calculateOptionPrice();">
             </div>
 
             <div class="text-center">
-                <button type="button" class="btn btn-primary" onclick="calculateOptionPrice()">Calculate Option Price</button>
+                <button type="button" class="btn btn-primary" onclick="calculateOptionPrice()">Calculate Option
+                    Price</button>
             </div>
         </form>
 
@@ -170,18 +179,19 @@
                     <p id="call_price_label">Call Price</p>
                     <p id="call_price"> </p>
                 </div>
-            <div class="col-md-6 text-center">
-                <p id="put_price_label">Put Price</p>
-                <p id="put_price"> </p>
+                <div class="col-md-6 text-center">
+                    <p id="put_price_label">Put Price</p>
+                    <p id="put_price"> </p>
+                </div>
             </div>
-        </div>
 
-    <p id="error" style="color: red;"></p>
-</div>
+            <p id="error" style="color: red;"></p>
+        </div>
     </div>
 
     <!-- Settings Modal -->
-    <div class="modal fade" id="settings-modal" tabindex="-1" role="dialog" aria-labelledby="settings-modal-label" aria-hidden="true">
+    <div class="modal fade" id="settings-modal" tabindex="-1" role="dialog" aria-labelledby="settings-modal-label"
+        aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -212,32 +222,37 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
-        const socket = io.connect('http://' + document.domain + ':' + location.port);
+        // const socket = io.connect('http://' + document.domain + ':' + location.port);
 
         function calculateOptionPrice() {
-            const data = {
-                spot_price: $('#spot_price').val(),
-                strike_price: $('#strike_price').val(),
-                time_to_maturity: $('#time_to_maturity').val(),
-                volatility: $('#volatility').val(),
-                interest_rate: $('#interest_rate').val(),
-            };
+            var spotPrice = parseFloat(document.getElementById('spot_price').value);
+            var strikePrice = parseFloat(document.getElementById('strike_price').value);
+            var timeToMaturity = parseFloat(document.getElementById('time_to_maturity').value);
+            var volatility = parseFloat(document.getElementById('volatility').value);
+            var interestRate = parseFloat(document.getElementById('interest_rate').value);
 
-            socket.emit('calculate_option_price', data);
+            var d1 = (Math.log(spotPrice / strikePrice) + (interestRate + (volatility ** 2) / 2) * timeToMaturity) / (volatility * Math.sqrt(timeToMaturity));
+            var d2 = d1 - volatility * Math.sqrt(timeToMaturity);
+
+            var callPrice = spotPrice * normCDF(d1) - strikePrice * Math.exp(-interestRate * timeToMaturity) * normCDF(d2);
+            var putPrice = strikePrice * Math.exp(-interestRate * timeToMaturity) * normCDF(-d2) - spotPrice * normCDF(-d1);
+
+            // Update the HTML content of elements with ids 'call_price' and 'put_price'
+            document.getElementById('call_price').innerHTML = callPrice.toFixed(3);
+            document.getElementById('put_price').innerHTML = putPrice.toFixed(3);
         }
 
-        socket.on('option_prices', function(data) {
-            if (data.error) {
-                $('#error').text('Error: ' + data.error);
-            } else {
-                $('#call_price').text(data.call_price.toFixed(2));
-                $('#put_price').text(data.put_price.toFixed(2));
-                $('#error').text('');
-            }
-        });
+        // Cumulative distribution function (CDF) for standard normal distribution
+        function normCDF(x) {
+            var t = 1 / (1 + 0.2316419 * Math.abs(x));
+            var d = 0.3989423 * Math.exp(-x * x / 2);
+            var prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+            if (x > 0) return 1 - prob;
+            return prob;
+        }
 
         // Dark mode toggle
-        $('#color-scheme').change(function() {
+        $('#color-scheme').change(function () {
             const colorScheme = $(this).val();
             if (colorScheme === 'dark') {
                 $('body').addClass('dark-mode');
@@ -272,4 +287,5 @@
         }
     </script>
 </body>
+
 </html>
